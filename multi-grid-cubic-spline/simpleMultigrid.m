@@ -34,11 +34,11 @@ n = 181;
 % ratio
 r = 10;
 % number of interpolant
-nInter = r * n + 1;
+nInter = r * (n - 1) + 1;
 
 %% interpolation nodes and evaluation nodes
 
-funNum = input('\n\n  Please enter the function number: \n');
+funNum = input('\n\n  Please enter the function number:  ');
 
 % lower bound and upper bound for functions
 lb = -1;
@@ -78,34 +78,27 @@ y = ynodes(1: nAnchors: n);
 
 switch sType 
     case 1
-        pEval = spline(x, y, xEval);
+        % evaluate at n sample locations (for the second round of spline)
+        pEval = spline(x, y, xnodes);
     case 2
         %yprime = 0 ;         % for "natural" spline  
         sCoefs = spline(x, [yprime; y; -yprime]);
-        pEval = ppval(sCoefs, xEval); 
+        pEval = ppval(sCoefs, xnodes);
+        pEvalAll = ppval(sCoefs, xEval);
     otherwise 
         error(' unknown spline type ');
 end
 
-%% error evaluation 
-
-% sup norm
-errFitSup  = eps + norm(fEval - pEval, 'inf'); 
-% L2 norm
-errFit2 = eps + norm(fEval - pEval, 2)/sqrt(n);  % with n-scaling  
-
-fprintf( '\n  ErrInf = %0.3g', errFitSup ); 
-fprintf( '\n  Err2   = %0.3g', errFit2 );
     
 %% display the interpolation errs at the evaluation points 
 
 figure(1);
 
 %  plot( Xeval, FatXeval, 'b.');
-plot(xnodes(1: nAnchors: n), ynodes(1: nAnchors: n), 'k.', 'MarkerSize', 6);
+plot(xnodes(1: nAnchors: n), ynodes(1: nAnchors: n), 'k.', 'MarkerSize', 5);
 hold on 
 plot(xEval, fEval, 'b.', 'MarkerSize', 4);
-plot(xEval, pEval, 'm.', 'MarkerSize', 4);
+plot(xnodes, pEval, 'm.', 'MarkerSize', 5);
 legend('Sample points', funName, 'Spline interpolant', 'Location', 'Best');
 hold off 
 
@@ -116,6 +109,58 @@ title( bannerStr );
 fprintf( '\n\n  First step finished \n\n ');
 
 %% Second step
+
+diffEval = pEval - ynodes;
+pEval = zeros(nInter, 1);
+ind = 1;
+sampleInd = 1;
+for i = 1: length(x) - 1
+    x = xnodes(sampleInd: sampleInd + nAnchors);
+    y = diffEval(sampleInd: sampleInd + nAnchors);
+    xx = linspace(xnodes(sampleInd), xnodes(sampleInd + nAnchors), r * nAnchors + 1);
+    sampleInd = sampleInd + nAnchors;
+    
+    sCoefs = spline(x, [0; y; 0]);
+    segEval = ppval(sCoefs, xx);
+    pEval(ind: ind + length(segEval) - 1) = segEval';
+    ind = ind + length(segEval) - 1;
+end
+% last segment
+x = xnodes(sampleInd: end);
+y = diffEval(sampleInd: end);
+xx = linspace(xnodes(sampleInd), xnodes(end), r * (length(xnodes) - sampleInd) + 1);
+
+sCoefs = spline(x, [0; y; 0]);
+segEval = ppval(sCoefs, xx);
+pEval(ind: end) = segEval';
+
+pEval = pEval + pEvalAll;
+
+%% error evaluation 
+
+% sup norm
+errFitSup  = eps + norm(fEval - pEval, 'inf'); 
+% L2 norm
+errFit2 = eps + norm(fEval - pEval, 2) / sqrt(n);  % with n-scaling  
+
+fprintf( '\n  ErrInf = %0.3g', errFitSup ); 
+fprintf( '\n  Err2   = %0.3g', errFit2 );
+
+%% display the interpolation errs at the evaluation points 
+
+figure(2);
+
+plot(xEval, fEval, 'b.', 'MarkerSize', 4);
+hold on;
+plot(xEval, pEval, 'm.', 'MarkerSize', 4);
+legend(funName, 'Spline interpolant', 'Location', 'Best');
+hold off;
+
+xlabel('x');
+bannerStr = sprintf( 'Spline interpolation with # sample %d ', n); 
+title( bannerStr ); 
+
+fprintf( '\n\n  Second step finished \n\n ');
 
 return 
 

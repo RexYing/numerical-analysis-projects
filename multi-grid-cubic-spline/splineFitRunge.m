@@ -22,7 +22,7 @@ fprintf( '\n\n  splineFitRunge started \n ');
    
   sType = 2 ; 
   
-  n = 180 ; 
+  n = 20 ; 
   r = 10 ; 
 
   %% ... set up the interpolation nodes and evaluation nodes 
@@ -60,9 +60,11 @@ fprintf( '\n\n  splineFitRunge started \n ');
 
   figure 
   
+%  plot( Xeval, FatXeval, 'b.');
   plot( Xeval, FatXeval, 'b.', Xeval, PatXeval, 'm.');
   legend( 'Runge function', 'Spline interpolant', 'Location', 'Best');
   hold on 
+%  plot( Xeval, FatXeval, 'b--'); 
   plot( Xeval, FatXeval, 'b--', Xeval, PatXeval, 'm--'); 
   hold off 
   

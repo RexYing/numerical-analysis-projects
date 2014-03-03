@@ -73,12 +73,13 @@ if nAnchors <= 2
 end
 
 % params for cubic spline
-x = xnodes(1: nAnchors: n);
-y = ynodes(1: nAnchors: n);
+x = [xnodes(1: nAnchors: n); xnodes(end)];
+y = [ynodes(1: nAnchors: n); ynodes(end)];
 
-switch sType 
+switch sType
     case 1
         % evaluate at n sample locations (for the second round of spline)
+        % not-a-knot condition
         pEval = spline(x, y, xnodes);
     case 2
         %yprime = 0 ;         % for "natural" spline  
@@ -110,16 +111,22 @@ fprintf( '\n\n  First step finished \n\n ');
 
 %% Second step
 
-diffEval = pEval - ynodes;
+diffEval = ynodes - pEval;
 pEval = zeros(nInter, 1);
 ind = 1;
 sampleInd = 1;
-for i = 1: length(x) - 1
+for i = 1: length(x) - 2
     x = xnodes(sampleInd: sampleInd + nAnchors);
     y = diffEval(sampleInd: sampleInd + nAnchors);
     xx = linspace(xnodes(sampleInd), xnodes(sampleInd + nAnchors), r * nAnchors + 1);
     sampleInd = sampleInd + nAnchors;
     
+    % calculate estimation of gradient
+    grad1 = (y(2) - y(1)) / (x(2) - x(1));
+    grad2 = (y(end) - y(end - 1)) / (x(end) - x(end - 1));
+%     xLoc = [xnodes(sampleInd - 1: sampleInd + 1)];
+%     yLoc = [ynodes(sampleInd - 1: sampleInd + 1)];
+    % estimated boundary condition for sub-level spline
     sCoefs = spline(x, [0; y; 0]);
     segEval = ppval(sCoefs, xx);
     pEval(ind: ind + length(segEval) - 1) = segEval';

@@ -22,7 +22,7 @@ fprintf( '\n\n  splineFitRunge started \n ');
    
   sType = 2 ; 
   
-  n = 20 ; 
+  n = 180 ; 
   r = 10 ; 
 
   %% ... set up the interpolation nodes and evaluation nodes 

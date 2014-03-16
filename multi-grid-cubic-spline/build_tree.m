@@ -22,8 +22,13 @@ multigridData = cell(lvl, 2);
 n = size(hierInds, 1);
 intervals = 1;
 
-% Top-down: calculate indices
-for depth = lvl: -1: 2
+multigridData{1} = cell(1, 1);
+% Top-down: calculate space for each level and preallocate
+for depth = 1: lvl
+    nextIntervals = zeros(n, 1);
+    sizeNextInterv = 0; 
+    chInds = zeros(length(multigridData{depth, 1}), 1);
+    i = 1;
     for j = 1: length(intervals)
         iStart = intervals(j);
         if j == length(intervals)
@@ -31,27 +36,35 @@ for depth = lvl: -1: 2
         else
             iEnd = intervals(j + 1) - 1;
         end
-        [C, iHierInds, ~] = unique(hierInds(iStart: iEnd, depth));
-        multigridData{lvl - depth + 1, 2} = [multigridData{depth, 2}; ...
-            iHierInds + (iStart - 1)];
+        [C, iHierInds, ~] = unique(hierInds(iStart: iEnd, lvl - depth + 1));
+        multigridData{depth, 1}{i} = zeros(1, length(C));
+        chInds(j) = length(C);
+        nextIntervals(sizeNextInterv + 1: sizeNextInterv + length(C)) ...
+            = iHierInds + (iStart - 1);
+        sizeNextInterv = sizeNextInterv + length(C);
+        i = i + 1;
     end
-    intervals = multigridData{lvl - depth + 1, 2};
+    if (depth ~= lvl)
+        multigridData{depth + 1, 1} = cell(1, sizeNextInterv);
+        intervals = nextIntervals(1: sizeNextInterv);
+    end
+    multigridData{depth, 2} = chInds';
 end
+
 % last lvl: the leaves
 % allow repeated indices in the last level of hierInds indicating resampling
-multigridData{lvl, 1} = rawData;
+multigridData{lvl, 1} = mat2cell(rawData', 1, multigridData{lvl, 2});
 
 % bottom up: calculate anchor values (mean in the intervals)
 for depth = lvl - 1: -1: 1
+    % unify the children indices across the entire level
+    multigridData{depth, 2} = cumsum(multigridData{depth, 2});
     inds = multigridData{depth, 2};
+    iStart = 1;
     for j = 1: length(inds)
-        iStart = inds(j);
-        if j == length(inds)
-            iEnd = n;
-        else
-            iEnd = inds(j + 1) - 1;
-        end
-        multigridData{depth, 1}(j) = mean(rawData(iStart: iEnd));
+        iEnd = inds(j);
+        multigridData{depth, 1}{j} = mean([multigridData{depth + 1, 1}{iStart: iEnd}]);
+        iStart = iEnd + 1;
     end
 end
 

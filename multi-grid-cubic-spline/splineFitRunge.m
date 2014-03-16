@@ -41,7 +41,7 @@ fprintf( '\n\n  splineFitRunge started \n ');
          PatXeval = spline( xnodes, ynodes, Xeval ) ; 
       case 2  
          yprime = 50/26^2;    % end slopes of Runge for the clamped spline
-         yprime = 0 ;         % for "natural" spline  
+         %yprime = 0 ;         % for "natural" spline  
          Scoefs = spline( xnodes, [ yprime; ynodes; -yprime ] );
          PatXeval = ppval( Scoefs, Xeval ) ; 
       otherwise 

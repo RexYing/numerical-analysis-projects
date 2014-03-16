@@ -14,7 +14,7 @@
 % ppval   (built-in) 
 % maxihat (built-in)
 % runge   (provided) 
-% 
+%
 
 clear all ; 
 close all 
@@ -27,7 +27,7 @@ fprintf('\n  2: Maxican hat (scaled) \n');
 
 % Runge performs better with boundary condition y' = y'' = 0
 % Maxican hat performs better with boundary y'(lb) = y'(ub) = 0
-sType = 2;
+sType = 1;
 
 % number of grid points
 n = 181;
@@ -51,6 +51,7 @@ if funNum == 1
     ynodes = runge(xnodes);
     fEval = runge(xEval);
     yprime = 50/26^2;    % end slopes of Runge for the clamped spline
+    %yprime = 0;
 elseif funNum == 2
     funName = 'Maxican hat';
     % effective support for the function: [-5, 5]
@@ -80,10 +81,13 @@ switch sType
     case 1
         % evaluate at n sample locations (for the second round of spline)
         % not-a-knot condition
-        pEval = spline(x, y, xnodes);
+        sCoefs = spline(x, y);
+        pEval = ppval(sCoefs, xnodes);
+        pEvalAll = ppval(sCoefs, xEval);
     case 2
         %yprime = 0 ;         % for "natural" spline  
         sCoefs = spline(x, [yprime; y; -yprime]);
+        %sCoefs = spline(x, y);
         pEval = ppval(sCoefs, xnodes);
         pEvalAll = ppval(sCoefs, xEval);
     otherwise 
@@ -114,20 +118,41 @@ fprintf( '\n\n  First step finished \n\n ');
 diffEval = ynodes - pEval;
 pEval = zeros(nInter, 1);
 ind = 1;
-sampleInd = 1;
-for i = 1: length(x) - 2
+
+% first segment
+x = xnodes(1: 1 + nAnchors);
+y = diffEval(1: 1 + nAnchors);
+xx = linspace(xnodes(1), xnodes(1 + nAnchors), r * nAnchors + 1);
+% grad1 = (y(2) - y(1)) / (x(2) - x(1));
+% grad2 = (y(end) - y(end - 1)) / (x(end) - x(end - 1));
+grad1 = der3pt(x(1: 3), y(1: 3), 'le');
+grad2 = der3pt(xnodes(nAnchors: nAnchors + 2), diffEval(nAnchors: nAnchors + 2));
+sCoefs = spline(x, [grad1; y; grad2]);
+segEval = ppval(sCoefs, xx);
+pEval(ind: ind + length(segEval) - 1) = segEval';
+ind = ind + length(segEval) - 1;
+
+% segments in between
+sampleInd = 1 + nAnchors;
+for i = 2: length(x) - 2
     x = xnodes(sampleInd: sampleInd + nAnchors);
     y = diffEval(sampleInd: sampleInd + nAnchors);
     xx = linspace(xnodes(sampleInd), xnodes(sampleInd + nAnchors), r * nAnchors + 1);
-    sampleInd = sampleInd + nAnchors;
     
     % calculate estimation of gradient
-    grad1 = (y(2) - y(1)) / (x(2) - x(1));
-    grad2 = (y(end) - y(end - 1)) / (x(end) - x(end - 1));
-%     xLoc = [xnodes(sampleInd - 1: sampleInd + 1)];
-%     yLoc = [ynodes(sampleInd - 1: sampleInd + 1)];
+%     grad1 = (y(2) - y(1)) / (x(2) - x(1));
+%     grad2 = (y(end) - y(end - 1)) / (x(end) - x(end - 1));
+    % Left end of the segment
+    xLoc = xnodes(sampleInd - 1: sampleInd + 1);
+    yLoc = diffEval(sampleInd - 1: sampleInd + 1);
+    grad1 = der3pt(xLoc, yLoc);
+    % Right end of the segment
+    sampleInd = sampleInd + nAnchors;
+    xLoc = xnodes(sampleInd - 1: sampleInd + 1);
+    yLoc = diffEval(sampleInd - 1: sampleInd + 1);
+    grad2 = der3pt(xLoc, yLoc);
     % estimated boundary condition for sub-level spline
-    sCoefs = spline(x, [0; y; 0]);
+    sCoefs = spline(x, [grad1; y; grad2]);
     segEval = ppval(sCoefs, xx);
     pEval(ind: ind + length(segEval) - 1) = segEval';
     ind = ind + length(segEval) - 1;
@@ -136,6 +161,11 @@ end
 x = xnodes(sampleInd: end);
 y = diffEval(sampleInd: end);
 xx = linspace(xnodes(sampleInd), xnodes(end), r * (length(xnodes) - sampleInd) + 1);
+
+xLoc = xnodes(sampleInd - 1: sampleInd + 1);
+yLoc = diffEval(sampleInd - 1: sampleInd + 1);
+grad1 = der3pt(xLoc, yLoc);
+grad2 = der3pt(xnodes(end - 2: end), diffEval(end - 2: end), 're');
 
 sCoefs = spline(x, [0; y; 0]);
 segEval = ppval(sCoefs, xx);

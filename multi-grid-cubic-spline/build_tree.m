@@ -10,13 +10,14 @@ function [ multigridData ] = build_multigrid( hierInds, rawData)
 % multigridData{n, 1} stores the data in the same format as rawData at nth
 % level
 % multigridData{n, 2} stores the child indices for each node at nth level
+% multigridData{n, 3} stores the index information provided by hierInds
 %
 % Choice of anchor node: meta nodes that describe specified intervals with
 % average (coarser scale approximation)
 %
 
 lvl = size(hierInds, 2);
-multigridData = cell(lvl, 2);
+multigridData = cell(lvl, 3);
 
 % data size
 n = size(hierInds, 1);
@@ -24,6 +25,7 @@ intervals = 1;
 
 multigridData{1} = cell(1, 1);
 % Top-down: calculate space for each level and preallocate
+% also records the non-leaf indices
 for depth = 1: lvl
     nextIntervals = zeros(n, 1);
     sizeNextInterv = 0; 
@@ -37,7 +39,8 @@ for depth = 1: lvl
             iEnd = intervals(j + 1) - 1;
         end
         [C, iHierInds, ~] = unique(hierInds(iStart: iEnd, lvl - depth + 1));
-        multigridData{depth, 1}{i} = zeros(1, length(C));
+        %multigridData{depth, 1}{i} = zeros(1, length(C));
+        multigridData{depth, 3} = [multigridData{depth, 3}, C'];
         chInds(j) = length(C);
         nextIntervals(sizeNextInterv + 1: sizeNextInterv + length(C)) ...
             = iHierInds + (iStart - 1);
@@ -54,6 +57,7 @@ end
 % last lvl: the leaves
 % allow repeated indices in the last level of hierInds indicating resampling
 multigridData{lvl, 1} = mat2cell(rawData', 1, multigridData{lvl, 2});
+multigridData{depth, 2} = cumsum(multigridData{depth, 2});
 
 % bottom up: calculate anchor values (mean in the intervals)
 for depth = lvl - 1: -1: 1

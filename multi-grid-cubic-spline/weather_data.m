@@ -17,6 +17,9 @@ hierInds(:, 3) = floor(rawData(:, 1) / 10000);
 maxTemp = rawData(:, 2);
 splineData = build_tree(hierInds, maxTemp);
 
+% test
+splineData = addleaf(splineData, [2010, 2, 29], 0);
+
 % --------------
 % Rex Ying
 % Undergraduate students at Duke CS 

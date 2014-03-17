@@ -15,10 +15,17 @@ hierInds(:, 2) = mod(floor(rawData(:, 1) / 100), 100);
 hierInds(:, 3) = floor(rawData(:, 1) / 10000);
 
 maxTemp = rawData(:, 2);
-splineData = build_tree(hierInds, maxTemp);
+splineData = build_multigrid(hierInds, maxTemp);
+% find indices of invalid data
+inds = hierInds(maxTemp == -9999, :);
 
 % test
-splineData = addleaf(splineData, [2010, 2, 29], 0);
+splineData = addleaf(splineData, [29, 2, 2010], 0);
+for i = 1: size(inds, 1)
+    splineData = removeleaf(splineData, inds(i, :));
+end
+% confirm
+find(cell2mat(splineData{3, 1}) == -9999)
 
 % --------------
 % Rex Ying

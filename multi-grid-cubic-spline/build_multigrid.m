@@ -67,7 +67,7 @@ for depth = lvl - 1: -1: 1
     iStart = 1;
     for j = 1: length(inds)
         iEnd = inds(j);
-        multigridData{depth, 1}{j} = mean([multigridData{depth + 1, 1}{iStart: iEnd}]);
+        multigridData{depth, 1}{j} = cellfun(@mean, multigridData{depth + 1, 1}(iStart: iEnd));
         iStart = iEnd + 1;
     end
 end

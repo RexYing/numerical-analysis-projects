@@ -27,6 +27,15 @@ end
 % confirm
 find(cell2mat(splineData{3, 1}) == -9999)
 
+%% spline
+xsample = 1: length(splineData{3, 3});
+ppcoeffs = perform_spline(splineData, xsample);
+xnodes = linspace(0, length(splineData{3, 3}), 3000);
+pEval = ppval(ppcoeffs{1}, xnodes);
+
+figure(1);
+plot(xnodes, pEval, 'b.', 'MarkerSize', 5);
+
 % --------------
 % Rex Ying
 % Undergraduate students at Duke CS 

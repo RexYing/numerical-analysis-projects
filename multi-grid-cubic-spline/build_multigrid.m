@@ -21,6 +21,7 @@ multigridData = cell(lvl, 3);
 
 % data size
 n = size(hierInds, 1);
+% interval is decided by the same values in the coarser level
 intervals = 1;
 
 multigridData{1} = cell(1, 1);
@@ -29,7 +30,7 @@ multigridData{1} = cell(1, 1);
 for depth = 1: lvl
     nextIntervals = zeros(n, 1);
     sizeNextInterv = 0; 
-    chInds = zeros(length(multigridData{depth, 1}), 1);
+    nChild = zeros(length(multigridData{depth, 1}), 1);
     i = 1;
     for j = 1: length(intervals)
         iStart = intervals(j);
@@ -38,10 +39,11 @@ for depth = 1: lvl
         else
             iEnd = intervals(j + 1) - 1;
         end
-        [C, iHierInds, ~] = unique(hierInds(iStart: iEnd, lvl - depth + 1));
-        %multigridData{depth, 1}{i} = zeros(1, length(C));
+        [C, iHierInds, ~] = unique(hierInds(iStart: iEnd, lvl - depth + 1), 'first');
+        
         multigridData{depth, 3} = [multigridData{depth, 3}, C'];
-        chInds(j) = length(C);
+        % number of children in each interval at current level
+        nChild(j) = length(C);
         nextIntervals(sizeNextInterv + 1: sizeNextInterv + length(C)) ...
             = iHierInds + (iStart - 1);
         sizeNextInterv = sizeNextInterv + length(C);
@@ -51,7 +53,7 @@ for depth = 1: lvl
         multigridData{depth + 1, 1} = cell(1, sizeNextInterv);
         intervals = nextIntervals(1: sizeNextInterv);
     end
-    multigridData{depth, 2} = chInds';
+    multigridData{depth, 2} = nChild';
 end
 
 % last lvl: the leaves
@@ -67,6 +69,8 @@ for depth = lvl - 1: -1: 1
     iStart = 1;
     for j = 1: length(inds)
         iEnd = inds(j);
+        % Averages of the data in the next finer level taken as the values
+        % of the current level
         multigridData{depth, 1}{j} = cellfun(@mean, multigridData{depth + 1, 1}(iStart: iEnd));
         iStart = iEnd + 1;
     end

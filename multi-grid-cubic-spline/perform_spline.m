@@ -24,8 +24,72 @@ for i = lvl - 1: -1: 1
     groupInds = cellfun(@sum, groups);
 end
 
-x = xgrid{1}
-ppcoeffs{1} = spline(x, multigrid{1, 1}{1});
+ppcoeffs{1} = spline(xgrid{1}, multigrid{1, 1}{1});
+
+%% higher level
+
+lvl = 2;
+% evaluate using upper level polynomial
+pEval = ppval(ppcoeffs{lvl - 1}, xgrid{lvl});
+% diffEval has the same length as pEval, or xgrid{lvl}
+diffEval = cell2mat(multigrid{lvl, 1}) - pEval;
+%diffEval = cell2mat(multigrid{lvl, 1});
+nAnchors = length(xgrid{lvl - 1});
+
+sampleInds = zeros(nAnchors, 1);
+for i = 1: nAnchors
+    % this is approximated right now
+    sampleInds(i) = binary_search(xgrid{lvl}, xgrid{lvl - 1}(i));
+end
+
+% first segment
+% startNode / endNode index xgrid{lvl}
+startNode = 1;
+endNode = sampleInds(1);
+x = xgrid{lvl}(startNode: endNode);
+y = diffEval(startNode: endNode);
+% approximate gradient
+grad1 = der3pt(x(1: 3), y(1: 3), 'le');
+grad2 = der3pt(xnodes(endNode - 1: endNode + 1), diffEval(endNode - 1: endNode + 1));
+sCoeffs = spline(x, [grad1, y, grad2]);
+% prepare for next iteration
+grad1 = grad2;
+startNode = endNode;
+
+% segments in between
+for i = 2: nAnchors + 1
+    if i <= nAnchors
+        endNode = sampleInds(i);
+    else
+        endNode = length(xgrid{lvl});
+        xgrid{lvl}(startNode: endNode)
+    end
+        
+    x = xgrid{lvl}(startNode: endNode);
+    y = diffEval(startNode: endNode);
+    
+    % calculate estimation of gradient
+    % Right end of the segment
+    if endNode <= nAnchors
+        xLoc = xgrid{lvl}(endNode - 1: endNode + 1);
+        yLoc = diffEval(endNode - 1: endNode + 1);
+        grad2 = der3pt(xLoc, yLoc);
+    else
+        xLoc = xgrid{lvl}(endNode - 2: endNode);
+        yLoc = diffEval(endNode - 2: endNode);
+        grad2 = der3pt(xLoc, yLoc, 're');
+    end
+    % estimated boundary condition for sub-level spline
+    sCoeffsTmp = spline(x, [grad1, y, grad2]);
+    sCoeffs = combine_pp(sCoeffs, sCoeffsTmp);
+    
+    grad1 = grad2;
+    startNode = endNode;
+end
+
+%ppcoeffs{2} = spline(xgrid{2}, cell2mat(multigrid{2, 1}));
+ppcoeffs{2} = sCoeffs;
+ppcoeffs{3} = spline(xnodes, cell2mat(multigrid{3, 1}));
 
 end
 

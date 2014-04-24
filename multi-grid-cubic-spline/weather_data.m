@@ -52,6 +52,8 @@ for i = 1: size(hierInds, 1)
 end
 
 %% spline
+smoothParams = [1, 1, 0.1];
+
 [ppcoeffs, xgrid] = perform_spline(splineData, xsample);
 xnodes = linspace(1, xsample(end), 30000);
 

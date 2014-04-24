@@ -11,6 +11,7 @@ function [ pp ] = add_pp( pp1, pp2, range )
 if nargin >= 3 && strcmp(range, 'common')
     commonRange = true;
 else
+    % By default, the entire range is taken.
     commonRange = false;
 end
     

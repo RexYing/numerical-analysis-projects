@@ -52,7 +52,7 @@ for i = 1: size(hierInds, 1)
 end
 
 %% spline
-ppcoeffs = perform_spline(splineData, xsample);
+[ppcoeffs, xgrid] = perform_spline(splineData, xsample);
 xnodes = linspace(1, xsample(end), 30000);
 
 lvl = 2;
@@ -63,7 +63,8 @@ plot(xnodes, pEval, 'b.', 'MarkerSize', 4);
 %sampleEval = ppval(ppcoeffs{lvl}, ppcoeffs{lvl}.breaks);
 sampleEval = cell2mat(splineData{lvl, 1});
 hold on;
-plot(ppcoeffs{lvl}.breaks, sampleEval, 'm.', 'MarkerSize', 6);
+%plot(ppcoeffs{lvl}.breaks, sampleEval, 'm.', 'MarkerSize', 6);
+plot(xgrid{lvl}, sampleEval, 'm.', 'MarkerSize', 6);
 hold off;
 
 % --------------

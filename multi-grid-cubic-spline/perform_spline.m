@@ -1,13 +1,16 @@
-function [ ppcoeffs ] = perform_spline( multigrid, xnodes )
+function [ ppcoeffs, xgrid ] = perform_spline( multigrid, xnodes )
 %PERFORM_SPLINE Perform multigrid cubic spline
 %
 % multigrid: multigrid data
 % xnodes: the bottom level data sampling location.
+%
 % ppcoeffs: each cell contains the piecewise polynomial coefficients to be used by ppval.
 %   It is a n-cell array, the ith cell contains the piecewise polynomial form
 %   at the ith scale. 
 %   The first cell is the approximation spline, and the rest are details at 
 %   different scales.
+% xgrid: the position of anchor nodes. xgrid{i} contains the ith level anchor
+%   nodes x-position.
 %
 
 lvl = size(multigrid, 1);
@@ -88,6 +91,8 @@ for i = 2: nAnchors + 1
 end
 
 %ppcoeffs{2} = spline(xgrid{2}, cell2mat(multigrid{2, 1}));
+% add the spline function of the first level.
+sCoeffs = add_pp(sCoeffs, ppcoeffs{1});
 ppcoeffs{2} = sCoeffs;
 ppcoeffs{3} = spline(xnodes, cell2mat(multigrid{3, 1}));
 

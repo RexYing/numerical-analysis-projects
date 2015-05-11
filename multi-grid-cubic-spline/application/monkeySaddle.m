@@ -5,9 +5,10 @@ function [ Z, bd ] = monkeySaddle( X, Y )
 %
 % bd: a struct with four fields (left, right, top, bottom): first derivative boundary conditions
 %   left / right are the partial derivatives with respect to x on the left/right
-%   boundaries
+%       boundaries, which has the length equal to the number of sample points
+%       on x-axis.
 %   top / bottom are the partial derivatives with respect to y on the
-%   top/bottom boundaries
+%       top/bottom boundaries
 %   
 
 x = X(1, :);

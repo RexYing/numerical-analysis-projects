@@ -22,3 +22,20 @@ plot(x, ppval(pp2, x), 'r');
 scatter(x1, y1);
 scatter(x2, y2);
 hold off;
+
+%% test quarticSpline2
+
+% ground truth polynomial: x^4 - x^3 + x^2 - x for both segment (relative
+% to 0, no shift)
+xx = [1, 3, 5];
+yy = [0, 60, 520];
+[ c ] = quarticSpline2( xx, yy, [2, 8; 434, 272] );
+coefs = zeros(2, 5);
+coefs(1, :) = c(5: -1: 1);
+coefs(2, :) = c(10: -1: 6);
+pp = mkpp(xx, coefs);
+
+xi = 1: 0.1: 5;
+ppvals = ppval(pp, xi);
+figure
+plot(xi, ppvals);

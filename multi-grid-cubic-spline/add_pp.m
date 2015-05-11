@@ -2,8 +2,7 @@ function [ pp ] = add_pp( pp1, pp2, range )
 %ADD_PP add piecewise polynomial
 %
 % Range: if range is set to 'common', the common range is taken when the 
-% two piecewise polynomials are not of the same range. (there will
-% be extrapolation outside of the common range).
+% two piecewise polynomials are not of the same range.
 %   Otherwise, the entire range is taken.
 %
 % 

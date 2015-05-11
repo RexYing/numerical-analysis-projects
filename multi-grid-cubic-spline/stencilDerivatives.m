@@ -15,6 +15,12 @@ function [ der ] = stencilDerivatives( sample, stencil )
 %   der: [1-by-2] vector of first and second derivatives
 %
 
+if iscolumn(stencil)
+    stencil = stencil';
+end
+if iscolumn(sample)
+    sample = sample';
+end
 % 1st derivative approx at x2, x4
 Y = [(stencil(2) - stencil(1)) / (sample(2) - sample(1)), stencil(2: 4), ...
     (stencil(5) - stencil(4)) / (sample(5) - sample(4))];
